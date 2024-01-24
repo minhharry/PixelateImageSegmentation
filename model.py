@@ -23,9 +23,8 @@ class DoubleConv(nn.Module):
     def forward(self, x):
         return F.relu(self.layers(x)+self.skip_connection(x))
 class AutoEncoder(nn.Module):
-    def __init__(self) -> None:
+    def __init__(self, scale=0.5) -> None:
         super().__init__()
-        scale = 0.75
         self.layers = nn.Sequential(
             DoubleConv(3, int(64*scale)),
             nn.MaxPool2d(2),
@@ -45,6 +44,60 @@ class AutoEncoder(nn.Module):
     def forward(self, x):
         return self.layers(x)
 
+class Unet(nn.Module):
+    def __init__(self, scale=0.5) -> None:
+        super().__init__()
+        self.down1 = nn.Sequential(
+            DoubleConv(3, int(64*scale)),
+            nn.MaxPool2d(2)
+        )
+        self.down2 =  nn.Sequential(
+            DoubleConv(int(64*scale), int(128*scale)),
+            nn.MaxPool2d(2)
+        )
+        self.down3 =  nn.Sequential(
+            DoubleConv(int(128*scale), int(256*scale)),
+            nn.MaxPool2d(2)
+        )
+        self.down4 =  nn.Sequential(
+            DoubleConv(int(256*scale), int(512*scale)),
+            nn.MaxPool2d(2)
+        )
+        self.bottleneck = nn.Sequential(
+            DoubleConv(int(512*scale), int(512*scale))
+        )
+        self.up1 =  nn.Sequential(
+            DoubleConv(int(1024*scale), int(256*scale)),
+            nn.Upsample(scale_factor=2)
+        )
+        self.up2 =  nn.Sequential(
+            DoubleConv(int(512*scale), int(128*scale)),
+            nn.Upsample(scale_factor=2)
+        )
+        self.up3 =  nn.Sequential(
+            DoubleConv(int(256*scale), int(64*scale)),
+            nn.Upsample(scale_factor=2)
+        )
+        self.up4 =  nn.Sequential(
+            DoubleConv(int(128*scale), int(64*scale)),
+            nn.Upsample(scale_factor=2)
+        )
+        self.outconv = nn.Sequential(
+            nn.Conv2d(int(64*scale), 4, 3, 1, 1),
+            nn.Sigmoid()
+        )
+    def forward(self, x):
+        x1 = self.down1(x)
+        x2 = self.down2(x1)
+        x3 = self.down3(x2)
+        x4 = self.down4(x3)
+        x5 = self.bottleneck(x4)
+        out = self.up1(torch.cat([x5, x4], dim=1))
+        out = self.up2(torch.cat([out, x3], dim=1))
+        out = self.up3(torch.cat([out, x2], dim=1))
+        out = self.up4(torch.cat([out, x1], dim=1))
+        out = self.outconv(out)
+        return out
 
 if __name__ == "__main__":
     device = 'cuda' if torch.cuda.is_available() else 'cpu'

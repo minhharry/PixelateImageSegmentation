@@ -14,8 +14,17 @@ class DiceLoss(nn.Module):
         intersection = (pred_flat*target_flat).sum()
         return 1 -  (2. * intersection + self.smooth) / (pred_flat.sum() + target_flat.sum() + self.smooth)
 
+class MaskL1Loss(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.smooth = 1
+    
+    def forward(self, pred, target, mask):
+        pred_flat = (pred*mask)
+        target_flat = (target*mask)
+        return nn.L1Loss()(pred_flat, target_flat)*262144/mask.sum()
 
 
 if __name__ == "__main__":
-    lossfn = DiceLoss()
-    print(lossfn(torch.randn((1,1,512,512)), torch.randn((1,1,512,512))).item())
+    lossfn = MaskL1Loss()
+    print(lossfn(torch.randn((1,4,512,512)), torch.randn((1,4,512,512))))

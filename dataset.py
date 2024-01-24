@@ -7,10 +7,10 @@ from torch.utils.data import Dataset
 from torchvision.transforms import ToTensor
 
 class TorinoAquaDataset(Dataset):
-    def __init__(self) -> None:
+    def __init__(self, rootdir='torinoaqua') -> None:
         super().__init__()
-        self.rootdir = 'torinoaqua'
-        self.listdir = os.listdir('torinoaqua')
+        self.rootdir = rootdir
+        self.listdir = os.listdir(rootdir)
         self.transfroms = ToTensor()
         
     def __len__(self):

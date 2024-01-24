@@ -11,10 +11,10 @@ class DoubleConv(nn.Module):
         self.layers = nn.Sequential(
             nn.Conv2d(in_channels, mid_channels, 3, 1, 1),
             nn.ReLU(inplace=True),
-            nn.InstanceNorm2d(mid_channels),
+            nn.GroupNorm(mid_channels//4, mid_channels),
             nn.Conv2d(mid_channels, out_channels, 3, 1, 1),
             nn.ReLU(inplace=True),
-            nn.InstanceNorm2d(out_channels),
+            nn.GroupNorm(out_channels//4, out_channels),
         )
         self.skip_connection = nn.Sequential(
             nn.Conv2d(in_channels, out_channels, 3, 1, 1),

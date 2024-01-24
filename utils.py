@@ -8,8 +8,9 @@ class DiceLoss(nn.Module):
         self.smooth = 1
     
     def forward(self, pred, target):
-        pred_flat = pred.view(-1)
-        target_flat = target.view(-1)
+        size = target.size(0)
+        pred_flat = pred.view(size, -1)
+        target_flat = target.view(size, -1)
         intersection = (pred_flat*target_flat).sum()
         return 1 -  (2. * intersection + self.smooth) / (pred_flat.sum() + target_flat.sum() + self.smooth)
 

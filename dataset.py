@@ -24,14 +24,14 @@ class TorinoAquaDataset(Dataset):
 
         egdeLength = 400
         x, y = random.randint(0, 512-egdeLength), random.randint(0, 512-egdeLength)
-
-        temp = label.crop((x, y, x+egdeLength, y+egdeLength)).resize((egdeLength//10,egdeLength//10), Image.Resampling.NEAREST).resize((egdeLength,egdeLength), Image.Resampling.NEAREST)
+        factor = random.randint(10, 50)
+        temp = label.crop((x, y, x+egdeLength, y+egdeLength)).resize((egdeLength//factor,egdeLength//factor), Image.Resampling.NEAREST).resize((egdeLength,egdeLength), Image.Resampling.NEAREST)
 
         
         mask = Image.new('L', temp.size, 0)
         draw = ImageDraw.Draw(mask)
         for i in range(3):
-            ew, eh = random.randint(egdeLength//5, egdeLength//3), random.randint(egdeLength//5, egdeLength//3)
+            ew, eh = random.randint(50, egdeLength-50), random.randint(50, egdeLength-50)
             ex, ey = random.randint(0, temp.size[0]-ew), random.randint(0, temp.size[1]-eh)
             draw.ellipse((ex, ey, ex+ew, ey+eh), fill=255)
         temp.putalpha(mask)

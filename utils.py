@@ -24,6 +24,16 @@ class MaskL1Loss(nn.Module):
         target_flat = (target*mask)
         return nn.L1Loss()(pred_flat, target_flat)*262144/mask.sum()
 
+class MaskBce(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.smooth = 1
+    
+    def forward(self, pred, target, mask):
+        pred_flat = (pred*mask)
+        target_flat = (target*mask)
+        return nn.BCELoss()(pred_flat, target_flat)*262144/mask.sum()
+
 
 if __name__ == "__main__":
     lossfn = MaskL1Loss()

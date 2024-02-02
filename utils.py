@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 from torchinfo import summary
+import torch.nn.functional as F
 
 class DiceLoss(nn.Module):
     def __init__(self):
@@ -22,7 +23,7 @@ class MaskL1Loss(nn.Module):
     def forward(self, pred, target, mask):
         pred_flat = (pred*mask)
         target_flat = (target*mask)
-        return nn.L1Loss()(pred_flat, target_flat)*262144/mask.sum()
+        return nn.L1Loss()(pred_flat, target_flat)
 
 class MaskBce(nn.Module):
     def __init__(self):
@@ -32,9 +33,9 @@ class MaskBce(nn.Module):
     def forward(self, pred, target, mask):
         pred_flat = (pred*mask)
         target_flat = (target*mask)
-        return nn.BCELoss()(pred_flat, target_flat)*262144/mask.sum()
+        return nn.BCELoss()(pred_flat, target_flat)
 
 
 if __name__ == "__main__":
-    lossfn = MaskL1Loss()
-    print(lossfn(torch.randn((1,4,512,512)), torch.randn((1,4,512,512))))
+    lossfn = MaskBce()
+    print(lossfn(F.sigmoid(torch.randn((1,3,512,512))), F.sigmoid(torch.randn((1,3,512,512))), torch.ones((1,1,512,512))))

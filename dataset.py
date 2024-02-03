@@ -8,6 +8,10 @@ from torchvision.transforms import ToTensor
 
 class TorinoAquaDataset(Dataset):
     def __init__(self, rootdir='torinoaqua', no_mask=0.5) -> None:
+        '''
+            rootdir: relative path of the dataset
+            no_mask: 0.1 for 10% no masked images, -1 for 100% masked images
+        '''
         super().__init__()
         self.rootdir = rootdir
         self.listdir = os.listdir(rootdir)
@@ -32,12 +36,12 @@ class TorinoAquaDataset(Dataset):
             label = self.transfroms(label)
             maskbig = self.transfroms(maskbig)
             return {'input':input, 'label':label, 'mask':maskbig}
+
         egdeLength = 400
         x, y = random.randint(0, 512-egdeLength), random.randint(0, 512-egdeLength)
         factor = random.randint(10, 50)
         temp = label.crop((x, y, x+egdeLength, y+egdeLength)).resize((egdeLength//factor,egdeLength//factor), Image.Resampling.NEAREST).resize((egdeLength,egdeLength), Image.Resampling.NEAREST)
 
-        
         mask = Image.new('L', temp.size, 0)
         draw = ImageDraw.Draw(mask)
         for i in range(3):

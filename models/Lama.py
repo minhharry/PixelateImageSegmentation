@@ -28,7 +28,7 @@ class SpectralTransform(nn.Module):
             nn.ReLU()
         )
         self.layers2 = FU(out_channels, out_channels)
-        self.out_conv = nn.Conv2d(out_channels, out_channels, 1, 1, 0)
+        self.out_conv = nn.Conv2d(out_channels, out_channels, 3, 1, 1)
     def forward(self, x):
         skip = self.layers1(x)
         out = self.layers2(skip)
@@ -68,34 +68,39 @@ class RBlock(nn.Module):
         if (in_channels==out_channels):
             self.skip = nn.Identity()
         else:
-            self.skip = nn.Conv2d(in_channels, out_channels, 1, 1, 0)
+            self.skip = nn.Conv2d(in_channels, out_channels, 3, 1, 1)
         self.layers = FFCRB(in_channels, out_channels)
 
     def forward(self, x):
         return self.skip(x)+self.layers(x)
 
 class Lama(nn.Module):
-    def __init__(self, scale=1) -> None:
+    def __init__(self, scale=1, in_channels=3, out_channels=3) -> None:
         super().__init__()
         self.layers = nn.Sequential(
-            nn.Conv2d(3, int(32*scale), 1, 1, 0),
+            nn.Conv2d(in_channels, int(32*scale), 3, 1, 1),
             RBlock(int(32*scale), int(64*scale)),
             nn.MaxPool2d(2),
             RBlock(int(64*scale), int(128*scale)),
             nn.MaxPool2d(2),
-            RBlock(int(128*scale), int(128*scale)),
-            RBlock(int(128*scale), int(128*scale)),
-            RBlock(int(128*scale), int(128*scale)),
-            RBlock(int(128*scale), int(128*scale)),
-            RBlock(int(128*scale), int(128*scale)),
-            RBlock(int(128*scale), int(128*scale)),
-            RBlock(int(128*scale), int(128*scale)),
-            RBlock(int(128*scale), int(128*scale)),
+            RBlock(int(128*scale), int(256*scale)),
+            nn.MaxPool2d(2),
+            RBlock(int(256*scale), int(256*scale)),
+            RBlock(int(256*scale), int(256*scale)),
+            RBlock(int(256*scale), int(256*scale)),
+            RBlock(int(256*scale), int(256*scale)),
+            RBlock(int(256*scale), int(256*scale)),
+            RBlock(int(256*scale), int(256*scale)),
+            RBlock(int(256*scale), int(256*scale)),
+            RBlock(int(256*scale), int(256*scale)),
+            RBlock(int(256*scale), int(256*scale)),
+            nn.Upsample(scale_factor=2),
+            RBlock(int(256*scale), int(128*scale)),
             nn.Upsample(scale_factor=2),
             RBlock(int(128*scale), int(64*scale)),
             nn.Upsample(scale_factor=2),
             RBlock(int(64*scale), int(32*scale)),
-            nn.Conv2d(int(32*scale), 3, 1, 1, 0),
+            nn.Conv2d(int(32*scale), out_channels, 3, 1, 1),
             nn.Sigmoid()
         )
     def forward(self, x):
@@ -103,5 +108,5 @@ class Lama(nn.Module):
 
 if __name__ == "__main__":
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    model = Lama(3).to(device)
-    summary(model, (1, 3, 512, 512))
+    model = Lama(2, 4, 3).to(device)
+    summary(model, (1, 4, 512, 512))

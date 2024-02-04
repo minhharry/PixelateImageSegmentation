@@ -199,11 +199,7 @@ class Discriminator(nn.Module):
             nn.Conv2d(int(256*scale), int(512*scale), 3, 2, 1),
             nn.InstanceNorm2d(int(512*scale)),
             nn.LeakyReLU(0.2),
-            nn.AdaptiveAvgPool2d((6, 6)),
-            nn.Flatten(),
-            nn.Linear(int(512*scale)*36, int(512*scale)),
-            nn.LeakyReLU(0.2),
-            nn.Linear(int(512*scale), 1),
+            nn.Conv2d(int(512*scale), 1, 3, 1, 1),
             nn.Sigmoid()
         )
     
@@ -212,5 +208,5 @@ class Discriminator(nn.Module):
 
 if __name__ == "__main__":
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    model = AutoEncoder().to(device)
+    model = Discriminator().to(device)
     summary(model, (1, 3, 512, 512))

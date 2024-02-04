@@ -203,7 +203,8 @@ class Discriminator(nn.Module):
             nn.Flatten(),
             nn.Linear(int(512*scale)*36, int(512*scale)),
             nn.LeakyReLU(0.2),
-            nn.Linear(int(512*scale), 1)
+            nn.Linear(int(512*scale), 1),
+            nn.Sigmoid()
         )
     
     def forward(self, x):

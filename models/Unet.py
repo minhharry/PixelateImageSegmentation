@@ -34,6 +34,9 @@ class AutoEncoder(nn.Module):
             DoubleConv(int(128*scale), int(256*scale)),
             nn.MaxPool2d(2),
             DoubleConv(int(256*scale), int(512*scale)),
+
+            DoubleConv(int(512*scale), int(512*scale)),
+
             nn.Upsample(scale_factor=2),
             DoubleConv(int(512*scale), int(256*scale)),
             nn.Upsample(scale_factor=2),
@@ -41,6 +44,7 @@ class AutoEncoder(nn.Module):
             nn.Upsample(scale_factor=2),
             DoubleConv(int(128*scale), int(64*scale)),
             nn.Conv2d(int(64*scale), 3, 3, 1, 1),
+            nn.Sigmoid()
         )
     def forward(self, x):
         return self.layers(x)
@@ -101,69 +105,43 @@ class Unet(nn.Module):
         return out
 
 
-class UResNet(nn.Module):
+class Unet2(nn.Module):
     def __init__(self, scale=0.5) -> None:
         super().__init__()
         self.down1 = nn.Sequential(
             DoubleConv(3, int(64*scale)),
-            DoubleConv(int(64*scale), int(64*scale)),
-            DoubleConv(int(64*scale), int(64*scale)),
-            DoubleConv(int(64*scale), int(64*scale)),
             nn.MaxPool2d(2)
         )
         self.down2 =  nn.Sequential(
             DoubleConv(int(64*scale), int(128*scale)),
-            DoubleConv(int(128*scale), int(128*scale)),
-            DoubleConv(int(128*scale), int(128*scale)),
-            DoubleConv(int(128*scale), int(128*scale)),
             nn.MaxPool2d(2)
         )
         self.down3 =  nn.Sequential(
             DoubleConv(int(128*scale), int(256*scale)),
-            DoubleConv(int(256*scale), int(256*scale)),
-            DoubleConv(int(256*scale), int(256*scale)),
-            DoubleConv(int(256*scale), int(256*scale)),
             nn.MaxPool2d(2)
         )
         self.down4 =  nn.Sequential(
             DoubleConv(int(256*scale), int(512*scale)),
-            DoubleConv(int(512*scale), int(512*scale)),
-            DoubleConv(int(512*scale), int(512*scale)),
-            DoubleConv(int(512*scale), int(512*scale)),
             nn.MaxPool2d(2)
         )
         self.bottleneck = nn.Sequential(
             DoubleConv(int(512*scale), int(512*scale)),
-            DoubleConv(int(512*scale), int(512*scale)),
-            DoubleConv(int(512*scale), int(512*scale)),
-            DoubleConv(int(512*scale), int(512*scale)),
+            DoubleConv(int(512*scale), int(512*scale))
         )
         self.up1 =  nn.Sequential(
             DoubleConv(int(1024*scale), int(256*scale)),
-            DoubleConv(int(256*scale), int(256*scale)),
-            DoubleConv(int(256*scale), int(256*scale)),
-            DoubleConv(int(256*scale), int(256*scale)),
             nn.Upsample(scale_factor=2)
         )
         self.up2 =  nn.Sequential(
             DoubleConv(int(512*scale), int(128*scale)),
-            DoubleConv(int(128*scale), int(128*scale)),
-            DoubleConv(int(128*scale), int(128*scale)),
-            DoubleConv(int(128*scale), int(128*scale)),
             nn.Upsample(scale_factor=2)
         )
         self.up3 =  nn.Sequential(
             DoubleConv(int(256*scale), int(64*scale)),
-            DoubleConv(int(64*scale), int(64*scale)),
-            DoubleConv(int(64*scale), int(64*scale)),
-            DoubleConv(int(64*scale), int(64*scale)),
             nn.Upsample(scale_factor=2)
         )
         self.up4 =  nn.Sequential(
             DoubleConv(int(128*scale), int(64*scale)),
-            DoubleConv(int(64*scale), int(64*scale)),
-            DoubleConv(int(64*scale), int(64*scale)),
-            DoubleConv(int(64*scale), int(64*scale)),
             nn.Upsample(scale_factor=2)
         )
         self.outconv = nn.Sequential(
@@ -208,5 +186,5 @@ class Discriminator(nn.Module):
 
 if __name__ == "__main__":
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    model = Discriminator().to(device)
+    model = Unet2().to(device)
     summary(model, (1, 3, 512, 512))

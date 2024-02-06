@@ -1,6 +1,6 @@
 __pycache__/
 TrainImg/
 TrainCheckpoint/
-torinoaqua/
+ImageDatasets/
 *.pth
 runs/

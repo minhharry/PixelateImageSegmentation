@@ -7,7 +7,7 @@ from torch.utils.data import Dataset
 from torchvision.transforms import ToTensor
 
 class TorinoAquaDataset(Dataset):
-    def __init__(self, rootdir='torinoaqua', no_mask=0.5, num_sample=-1, factor=(10,50)) -> None:
+    def __init__(self, rootdir='ImageDatasets', no_mask=0.5, num_sample=-1, factor=(10,50)) -> None:
         '''
             rootdir: relative path of the dataset
             no_mask: 0.1 for 10% no masked images, -1 for 100% masked images
@@ -15,8 +15,10 @@ class TorinoAquaDataset(Dataset):
             factor: resize factor
         '''
         super().__init__()
-        self.rootdir = rootdir
-        self.listdir = os.listdir(rootdir)
+        self.listdir = []
+        for dirpath, dirs, filenames in os.walk(rootdir):
+            for f in filenames:
+                self.listdir.append(os.path.join(dirpath, f))
         self.transfroms = ToTensor()
         self.no_mask = no_mask
         self.len = len(self.listdir) if num_sample==-1 else min(len(self.listdir), num_sample)
@@ -26,7 +28,7 @@ class TorinoAquaDataset(Dataset):
         return self.len
 
     def __getitem__(self, index):
-        img = Image.open(os.path.join(self.rootdir,self.listdir[index]))
+        img = Image.open(self.listdir[index])
         img = img.convert('RGBA')
         x, y = random.randint(0, img.size[0]-512), random.randint(0, img.size[1]-512)
         label = img.crop((x,y,x+512,y+512))
@@ -77,5 +79,6 @@ if __name__ == '__main__':
         axes[i, 2].set_title('mask')
         axes[i, 2].imshow(data['mask'].numpy().transpose(1,2,0))
     plt.show()
+    print(len(dataset))
     print(data['input'].shape, data['label'].shape, data['mask'].shape)
 

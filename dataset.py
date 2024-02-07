@@ -29,6 +29,7 @@ class TorinoAquaDataset(Dataset):
 
     def __getitem__(self, index):
         img = Image.open(self.listdir[index])
+        assert img.size[0] >= 512 and img.size[1] >= 512, f'Check image size ({self.listdir[index]}) in dataset.'
         img = img.convert('RGBA')
         x, y = random.randint(0, img.size[0]-512), random.randint(0, img.size[1]-512)
         label = img.crop((x,y,x+512,y+512))

@@ -7,7 +7,7 @@ class Discriminator(nn.Module):
     def __init__(self, scale=1, in_channels=3) -> None:
         super().__init__()
         self.layers = nn.Sequential(
-            nn.Conv2d(in_channels, int(64*scale), 3, 2, 1),
+            nn.Conv2d(in_channels*2, int(64*scale), 3, 2, 1),
             nn.InstanceNorm2d(int(64*scale)),
             nn.LeakyReLU(0.2),
             nn.Conv2d(int(64*scale), int(128*scale), 3, 2, 1),
@@ -23,8 +23,8 @@ class Discriminator(nn.Module):
             nn.Sigmoid()
         )
     
-    def forward(self, x):
-        return self.layers(x)
+    def forward(self, x, y):
+        return self.layers(torch.cat([x, y], dim=1))
 
 if __name__ == "__main__":
     device = 'cuda' if torch.cuda.is_available() else 'cpu'

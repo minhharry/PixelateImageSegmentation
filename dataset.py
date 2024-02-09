@@ -4,7 +4,7 @@ import random
 import matplotlib.pyplot as plt
 from PIL import Image, ImageDraw
 from torch.utils.data import Dataset
-from torchvision.transforms import ToTensor
+from torchvision.transforms import ToTensor, Compose, Resize
 
 class TorinoAquaDataset(Dataset):
     def __init__(self, rootdir='ImageDatasets', no_mask=0.5, num_sample=-1, factor=(10,50)) -> None:
@@ -67,6 +67,27 @@ class TorinoAquaDataset(Dataset):
         label = self.transfroms(label)
         maskbig = self.transfroms(maskbig)
         return {'input':input, 'label':label, 'mask':maskbig}
+
+class RawImageDataset(Dataset):
+    def __init__(self, rootdir='InputImg') -> None:
+        '''
+            rootdir: relative path of the dataset
+        '''
+        super().__init__()
+        self.listdir = []
+        for dirpath, dirs, filenames in os.walk(rootdir):
+            for f in filenames:
+                self.listdir.append(os.path.join(dirpath, f))
+        self.transfroms = ToTensor() #Compose([ToTensor(), Resize((512, 512))]) 
+        self.len = len(self.listdir)
+        
+    def __len__(self):
+        return self.len
+
+    def __getitem__(self, index):
+        img = Image.open(self.listdir[index]).convert('RGB')
+        img = self.transfroms(img)
+        return img
 
 if __name__ == '__main__':
     dataset = TorinoAquaDataset()

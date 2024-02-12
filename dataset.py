@@ -7,6 +7,8 @@ from torch.utils.data import Dataset
 from torchvision.transforms import ToTensor
 import albumentations as A
 import numpy as np
+import cv2
+import torchvision
 
 class TorinoAquaDataset(Dataset):
     def __init__(self, rootdir='ImageDatasets', no_mask=0.5, num_sample=-1, factor=(10,50)) -> None:
@@ -25,7 +27,12 @@ class TorinoAquaDataset(Dataset):
         self.aug = A.Compose([
             A.HorizontalFlip(),
             A.Rotate(),
-        ])
+        ],
+            additional_targets={
+                'image1': 'image',
+                'image2': 'image',
+            }
+        )
         self.no_mask = no_mask
         self.len = len(self.listdir) if num_sample==-1 else min(len(self.listdir), num_sample)
         self.factor = factor
@@ -36,7 +43,7 @@ class TorinoAquaDataset(Dataset):
     def __getitem__(self, index):
         img = Image.open(self.listdir[index])
         assert img.size[0] >= 512 and img.size[1] >= 512, f'Check image size ({self.listdir[index]}) in dataset.'
-        img = img.convert('RGBA')
+        img = img.convert('RGB')
         x, y = random.randint(0, img.size[0]-512), random.randint(0, img.size[1]-512)
         label = img.crop((x,y,x+512,y+512))
         input = label.copy()
@@ -46,8 +53,8 @@ class TorinoAquaDataset(Dataset):
             label = label.convert('RGB')
             maskbig = maskbig.convert('L')
             input, label, maskbig = np.array(input), np.array(label), np.array(maskbig)
-            aug = self.aug(image=input, masks=[label, maskbig])
-            input, label, maskbig = aug['image'], aug['masks'][0], aug['masks'][1]
+            aug = self.aug(image=input, image1=label, image2=maskbig)
+            input, label, maskbig = aug['image'], aug['image1'], aug['image2']
             input = self.transfroms(input)
             label = self.transfroms(label)
             maskbig = self.transfroms(maskbig)
@@ -72,10 +79,9 @@ class TorinoAquaDataset(Dataset):
         input = input.convert('RGB')
         label = label.convert('RGB')
         maskbig = maskbig.convert('L')
-
         input, label, maskbig = np.array(input), np.array(label), np.array(maskbig)
-        aug = self.aug(image=input, masks=[label, maskbig])
-        input, label, maskbig = aug['image'], aug['masks'][0], aug['masks'][1]
+        aug = self.aug(image=input, image1=label, image2=maskbig)
+        input, label, maskbig = aug['image'], aug['image1'], aug['image2']
         input = self.transfroms(input)
         label = self.transfroms(label)
         maskbig = self.transfroms(maskbig)
@@ -113,6 +119,16 @@ if __name__ == '__main__':
         axes[i, 1].imshow(data['label'].numpy().transpose(1,2,0))
         axes[i, 2].set_title('mask')
         axes[i, 2].imshow(data['mask'].numpy().transpose(1,2,0))
+        grid = torchvision.utils.make_grid([
+                    data['input'],
+                    data['label'],
+                    data['mask'].repeat(3,1,1)], 
+                    3
+                )
+        torchvision.utils.save_image(
+                    grid,
+                    f'TrainImg/Dataset{i+1}.png'
+                )
     plt.show()
     print(len(dataset))
     print(data['input'].shape, data['label'].shape, data['mask'].shape)

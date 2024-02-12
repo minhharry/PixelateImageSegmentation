@@ -4,7 +4,9 @@ import random
 import matplotlib.pyplot as plt
 from PIL import Image, ImageDraw
 from torch.utils.data import Dataset
-from torchvision.transforms import ToTensor, Compose, Resize
+from torchvision.transforms import ToTensor
+import albumentations as A
+import numpy as np
 
 class TorinoAquaDataset(Dataset):
     def __init__(self, rootdir='ImageDatasets', no_mask=0.5, num_sample=-1, factor=(10,50)) -> None:
@@ -20,6 +22,10 @@ class TorinoAquaDataset(Dataset):
             for f in filenames:
                 self.listdir.append(os.path.join(dirpath, f))
         self.transfroms = ToTensor()
+        self.aug = A.Compose([
+            A.HorizontalFlip(),
+            A.Rotate(),
+        ])
         self.no_mask = no_mask
         self.len = len(self.listdir) if num_sample==-1 else min(len(self.listdir), num_sample)
         self.factor = factor
@@ -39,6 +45,9 @@ class TorinoAquaDataset(Dataset):
             input = input.convert('RGB')
             label = label.convert('RGB')
             maskbig = maskbig.convert('L')
+            input, label, maskbig = np.array(input), np.array(label), np.array(maskbig)
+            aug = self.aug(image=input, masks=[label, maskbig])
+            input, label, maskbig = aug['image'], aug['masks'][0], aug['masks'][1]
             input = self.transfroms(input)
             label = self.transfroms(label)
             maskbig = self.transfroms(maskbig)
@@ -63,6 +72,10 @@ class TorinoAquaDataset(Dataset):
         input = input.convert('RGB')
         label = label.convert('RGB')
         maskbig = maskbig.convert('L')
+
+        input, label, maskbig = np.array(input), np.array(label), np.array(maskbig)
+        aug = self.aug(image=input, masks=[label, maskbig])
+        input, label, maskbig = aug['image'], aug['masks'][0], aug['masks'][1]
         input = self.transfroms(input)
         label = self.transfroms(label)
         maskbig = self.transfroms(maskbig)
@@ -91,7 +104,7 @@ class RawImageDataset(Dataset):
 
 if __name__ == '__main__':
     dataset = TorinoAquaDataset()
-    fig, axes = plt.subplots(5, 3, figsize=(50,20))
+    fig, axes = plt.subplots(5, 3, figsize=(25,10))
     for i in range(5):
         data = dataset[i]
         axes[i, 0].set_title('input')
